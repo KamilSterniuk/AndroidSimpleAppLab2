@@ -1,9 +1,13 @@
 package com.example.myapplication;
 
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
+import android.util.TypedValue;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -16,6 +20,7 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -26,6 +31,8 @@ public class MainActivity extends AppCompatActivity {
 
     private LinearLayout layout;
     private int currentColor = 0;
+
+    private float scalingFactor;
 
     private final int[] colors = {
             Color.rgb(255, 255, 255),
@@ -42,6 +49,11 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         layout = findViewById(R.id.main);
+
+        scalingFactor = calculateScalingFactor();
+
+        ViewGroup rootLayout = findViewById(R.id.main);
+        scaleLayout(rootLayout, scalingFactor);
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -64,6 +76,19 @@ public class MainActivity extends AppCompatActivity {
 
         Button diceRollButton = findViewById(R.id.diceRollButton);
         TextView diceRollResult = findViewById(R.id.diceRollText);
+
+        Button changeThemeButton = findViewById(R.id.changeTheme);
+        changeThemeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int currentNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+                if (currentNightMode == Configuration.UI_MODE_NIGHT_YES) {
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                } else {
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                }
+            }
+        });
 
         diceRollButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -166,6 +191,63 @@ public class MainActivity extends AppCompatActivity {
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, surnames);
         listView1.setAdapter(adapter);
     }
+
+    private float calculateScalingFactor() {
+        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+        float screenWidthDp = displayMetrics.widthPixels / displayMetrics.density;
+
+        // Determine scaling factor based on screen width (600dp for tablets as a guideline)
+        if (screenWidthDp >= 600) {
+            return 1.5f; // Tablet scaling factor
+        } else {
+            return 1.0f; // Default scaling for smartphones
+        }
+    }
+
+    private void scaleLayout(ViewGroup rootLayout, float scalingFactor) {
+        for (int i = 0; i < rootLayout.getChildCount(); i++) {
+            View child = rootLayout.getChildAt(i);
+
+            // Recursively scale child layouts
+            if (child instanceof ViewGroup) {
+                scaleLayout((ViewGroup) child, scalingFactor);
+            } else {
+                scaleView(child, scalingFactor);
+            }
+        }
+    }
+
+    private void scaleView(View view, float scalingFactor) {
+        if (view instanceof TextView) {
+            TextView textView = (TextView) view;
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, textView.getTextSize() * scalingFactor);
+        } else if (view instanceof Button) {
+            Button button = (Button) view;
+            button.setTextSize(TypedValue.COMPLEX_UNIT_PX, button.getTextSize() * scalingFactor);
+        } else if (view instanceof EditText) {
+            EditText editText = (EditText) view;
+            editText.setTextSize(TypedValue.COMPLEX_UNIT_PX, editText.getTextSize() * scalingFactor);
+        }
+
+        // Scale layout parameters (e.g., margins, padding)
+        ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
+        if (layoutParams instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams marginParams = (ViewGroup.MarginLayoutParams) layoutParams;
+            marginParams.leftMargin *= scalingFactor;
+            marginParams.topMargin *= scalingFactor;
+            marginParams.rightMargin *= scalingFactor;
+            marginParams.bottomMargin *= scalingFactor;
+        }
+
+        // Scale padding
+        view.setPadding(
+                (int) (view.getPaddingLeft() * scalingFactor),
+                (int) (view.getPaddingTop() * scalingFactor),
+                (int) (view.getPaddingRight() * scalingFactor),
+                (int) (view.getPaddingBottom() * scalingFactor)
+        );
+    }
+
 
     private int generateRandomColor() {
         Random random = new Random();
