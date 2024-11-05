@@ -10,11 +10,13 @@
         android:label="@string/app_name"
         android:roundIcon="@drawable/crow"
         android:supportsRtl="true"
-        android:theme="@style/Theme.MyApplication"
+        android:theme="@style/Theme.MaterialComponents.DayNight"
         tools:targetApi="31" >
         <activity
             android:name=".MainActivity"
-            android:exported="true" >
+            android:configChanges="orientation|screenSize"
+            android:screenOrientation="portrait"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

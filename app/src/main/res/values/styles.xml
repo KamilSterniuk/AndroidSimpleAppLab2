@@ -1,0 +1,8 @@
+<resources>
+    <!-- Główny motyw aplikacji w jasnej kolorystyce -->
+    <style name="AppTheme.Light" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">#6200EE</item>
+        <item name="colorPrimaryVariant">#3700B3</item>
+        <item name="colorSecondary">#03DAC5</item>
+    </style>
+</resources>

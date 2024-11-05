@@ -1,13 +1,20 @@
 package com.example.myapplication;
 
+import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.view.OrientationEventListener;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.RotateAnimation;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Spinner;
@@ -35,8 +42,19 @@ public class MainActivity extends AppCompatActivity {
             Color.rgb(255, 255, 0)
     };
 
+    private OrientationEventListener orientationListener;
+    private int lastOrientation = -1;
+
+    private boolean isDarkTheme = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        SharedPreferences sharedPreferences = getSharedPreferences("themePrefs", MODE_PRIVATE);
+        isDarkTheme = sharedPreferences.getBoolean("isDarkTheme", false);
+
+        setTheme(isDarkTheme ? R.style.AppTheme_Dark : R.style.AppTheme_Light);
+
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
@@ -49,9 +67,22 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
+        Button changeThemeButton = findViewById(R.id.changeTheme);
+        changeThemeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // Przełącz między jasnym a ciemnym motywem
+                isDarkTheme = !isDarkTheme;
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putBoolean("isDarkTheme", isDarkTheme);
+                editor.apply();
+
+                // Przeładuj aktywność, aby zastosować nowy motyw
+                recreate();
+            }
+        });
 
         Button button1 = findViewById(R.id.button1);
-        ListView listView1 = findViewById(R.id.listview1);
         Button randomColor = findViewById(R.id.randomButton);
         Button prevColor = findViewById(R.id.previousButton);
         Button nextButton = findViewById(R.id.nextButton);
@@ -64,6 +95,34 @@ public class MainActivity extends AppCompatActivity {
 
         Button diceRollButton = findViewById(R.id.diceRollButton);
         TextView diceRollResult = findViewById(R.id.diceRollText);
+
+
+        ImageView imageView = findViewById(R.id.imageView);
+
+        orientationListener = new OrientationEventListener(this, SensorManager.SENSOR_DELAY_NORMAL) {
+            @Override
+            public void onOrientationChanged(int orientation) {
+                int newOrientation = (orientation >= 315 || orientation < 45) ? 0 :
+                        (orientation < 135) ? 90 :
+                                (orientation < 225) ? 180 : 270;
+
+                if (newOrientation != lastOrientation) {
+                    RotateAnimation rotateAnimation = new RotateAnimation(
+                            lastOrientation, newOrientation,
+                            Animation.RELATIVE_TO_SELF, 0.5f,
+                            Animation.RELATIVE_TO_SELF, 0.5f
+                    );
+                    rotateAnimation.setDuration(500);
+                    rotateAnimation.setFillAfter(true);
+                    imageView.startAnimation(rotateAnimation);
+                    lastOrientation = newOrientation;
+                }
+            }
+        };
+
+        if (orientationListener.canDetectOrientation()) {
+            orientationListener.enable();
+        }
 
         diceRollButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -162,10 +221,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        String[] surnames = {"Kamil Sterniuk", "Zuzanna Cemka", "Stanisław Karmoliński"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, surnames);
-        listView1.setAdapter(adapter);
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (orientationListener != null) {
+            orientationListener.disable();
+        }
+    }
+
+
 
     private int generateRandomColor() {
         Random random = new Random();

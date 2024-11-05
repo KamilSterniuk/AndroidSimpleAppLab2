@@ -1,0 +1,8 @@
+<resources>
+    <!-- Ciemny motyw aplikacji -->
+    <style name="AppTheme.Dark" parent="Theme.MaterialComponents.NoActionBar">
+        <item name="colorPrimary">#121212</item>
+        <item name="colorPrimaryVariant">#333333</item>
+        <item name="colorSecondary">#BB86FC</item>
+    </style>
+</resources>
